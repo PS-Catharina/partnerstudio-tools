@@ -3,19 +3,22 @@
 import React, { useMemo, useRef, useState } from "react";
 import { Zap, RefreshCcw, Sparkles, Lightbulb, Upload, Wand2, Rocket } from "lucide-react";
 
-/* ---------- Små UI-byggeklosser ---------- */
-function Card({ children }: React.PropsWithChildren) {
-  return <div className="rounded-2xl bg-white/60 backdrop-blur shadow-lg">{children}</div>;
+/* ---------- Små UI-byggeklosser (nå med className-støtte) ---------- */
+type BoxProps = React.HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode };
+
+function Card({ className = "", ...props }: BoxProps) {
+  return <div className={`rounded-2xl bg-white/60 backdrop-blur shadow-lg ${className}`} {...props} />;
 }
-function CardHeader({ children }: React.PropsWithChildren) {
-  return <div className="px-5 pt-4 pb-2 flex items-center justify-between gap-3">{children}</div>;
+function CardHeader({ className = "", ...props }: BoxProps) {
+  return <div className={`px-5 pt-4 pb-2 flex items-center justify-between gap-3 ${className}`} {...props} />;
 }
-function CardTitle({ children }: React.PropsWithChildren) {
-  return <h2 className="text-lg font-semibold">{children}</h2>;
+function CardTitle({ className = "", ...props }: BoxProps) {
+  return <h2 className={`text-lg font-semibold ${className}`} {...props} />;
 }
-function CardContent({ children }: React.PropsWithChildren) {
-  return <div className="px-5 pb-5 space-y-3">{children}</div>;
+function CardContent({ className = "", ...props }: BoxProps) {
+  return <div className={`px-5 pb-5 space-y-3 ${className}`} {...props} />;
 }
+
 function Button(props: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
@@ -125,7 +128,7 @@ function analyzeBrief(brief: string) {
   return { client: client as keyof typeof TASK_BANK, goals };
 }
 
-/* ---------- Seeded shuffle (stabil men variert) ---------- */
+/* ---------- Seeded shuffle ---------- */
 function mulberry32(a: number) {
   return function () {
     let t = (a += 0x6d2b79f5);
@@ -149,7 +152,8 @@ function generateAgenda(duration: number, icebreaker: string) {
   const rows: { time: string; activity: string; how: string }[] = [];
   let t = 0;
   const add = (len: number, activity: string, how: string) => {
-    const start = t, end = t + len;
+    const start = t,
+      end = t + len;
     rows.push({ time: `${start}–${end} min`, activity, how });
     t = end;
   };
@@ -164,7 +168,7 @@ function generateAgenda(duration: number, icebreaker: string) {
   add(5, "Oppsummering og neste steg", "Moderator samler opp + stemme over idéer");
 
   return rows.filter((r) => {
-    const [_, endStr] = r.time.split("–");
+    const [, endStr] = r.time.split("–");
     const end = parseInt(endStr);
     return end <= duration;
   });
@@ -180,12 +184,11 @@ export default function WorkshopGenerator() {
   const [iceIdx, setIceIdx] = useState(0);
   const ice = ICEBREAKERS[iceIdx % ICEBREAKERS.length];
 
-  const [seed, setSeed] = useState(1); // økes når vi «genererer» på nytt
+  const [seed, setSeed] = useState(1);
   const agenda = useMemo(() => generateAgenda(Number(duration || "60"), ice), [duration, ice, seed]);
 
   const parsed = useMemo(() => analyzeBrief(brief), [brief]);
 
-  // Vektet, seeded shuffle – alle 6 kan byttes, men briefens mål øker sjansen for match
   const sixTasks = useMemo(() => {
     const base = TASK_BANK[parsed.client];
     const pool = [...base];
@@ -203,7 +206,7 @@ export default function WorkshopGenerator() {
       const keys = weightMap[g] || [];
       base.forEach((t) => {
         const hit = keys.some((k) => t.title.toLowerCase().includes(k) || t.desc.toLowerCase().includes(k));
-        if (hit) pool.push(t); // dupliser for høyere sjanse
+        if (hit) pool.push(t);
       });
     });
 
@@ -317,36 +320,36 @@ export default function WorkshopGenerator() {
 
         {/* Agenda */}
         <Card>
-  <CardHeader>
-    <CardTitle>Agenda</CardTitle>
-    <Button onClick={() => setIceIdx((i) => i + 1)}>
-      <Zap className="w-4 h-4" />
-      Bytt icebreaker
-    </Button>
-  </CardHeader>
-  <CardContent>
-    <div className="overflow-x-auto">
-      <table className="w-full text-left border-collapse">
-        <thead>
-          <tr className="bg-purple-50">
-            <th className="px-3 py-2 text-sm font-semibold text-slate-700 w-24">Tid</th>
-            <th className="px-3 py-2 text-sm font-semibold text-slate-700">Aktivitet</th>
-            <th className="px-3 py-2 text-sm font-semibold text-slate-700">Slik gjør du det</th>
-          </tr>
-        </thead>
-        <tbody>
-          {agenda.map((row, i) => (
-            <tr key={i} className="border-b last:border-0">
-              <td className="px-3 py-2 text-sm text-slate-600 whitespace-nowrap">{row.time}</td>
-              <td className="px-3 py-2 text-sm font-medium text-slate-800">{row.activity}</td>
-              <td className="px-3 py-2 text-sm text-slate-700">{row.how}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </CardContent>
-</Card>
+          <CardHeader>
+            <CardTitle>Agenda</CardTitle>
+            <Button onClick={() => setIceIdx((i) => i + 1)}>
+              <Zap className="w-4 h-4" />
+              Bytt icebreaker
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-purple-50">
+                    <th className="px-3 py-2 text-sm font-semibold text-slate-700 w-24">Tid</th>
+                    <th className="px-3 py-2 text-sm font-semibold text-slate-700">Aktivitet</th>
+                    <th className="px-3 py-2 text-sm font-semibold text-slate-700">Slik gjør du det</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {agenda.map((row, i) => (
+                    <tr key={i} className="border-b last:border-0">
+                      <td className="px-3 py-2 text-sm text-slate-600 whitespace-nowrap">{row.time}</td>
+                      <td className="px-3 py-2 text-sm font-medium text-slate-800">{row.activity}</td>
+                      <td className="px-3 py-2 text-sm text-slate-700">{row.how}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Oppgaver */}
         <Card>
